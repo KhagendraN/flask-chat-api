@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="shortcut icon" type="web-icon" href="assets/img/logo.png">
+    <title>Chat with Clone</title>
+    <style>
+        body {
+            font-family: 'Cursive', sans-serif;
+            background: linear-gradient(135deg, #ffcccc, #ff99cc);
+            color: #800000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 90%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff69b4;
+        }
+
+        .chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #fff0f5;
+            border-radius: 10px;
+            border: 1px solid #ffb6c1;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            display: inline-block;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: #ffc1e3;
+            align-self: flex-end;
+        }
+
+        .message.bot {
+            background: #fff5f8;
+            align-self: flex-start;
+        }
+
+        .input-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            width: 75%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ff99cc;
+            margin-right: 10px;
+        }
+
+        button {
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ff1493;
+        }
+
+        .mic-button {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            color: #ff69b4;
+            cursor: pointer;
+        }
+
+        .mic-button:hover {
+            color: #ff1493;
+        }
+
+        @media (max-width: 600px) {
+            .chat-container {
+                padding: 10px;
+            }
+
+            input[type="text"] {
+                font-size: 14px;
+            }
+
+            button {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+    <script>
+        let recognition;
+        const synth = window.speechSynthesis;
+
+        // Initialize Speech Recognition
+        function startSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Speech recognition is not supported in this browser.');
+                return;
+            }
+
+            if (!recognition) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onresult = function (event) {
+                    const transcript = event.results[0][0].transcript;
+                    displayMessage(transcript, 'user', 'Sent');
+                    sendMessageToBackend(transcript);
+                };
+
+                recognition.onerror = function (event) {
+                    console.error('Speech recognition error:', event.error);
+                };
+
+                recognition.onend = function () {
+                    console.log('Speech recognition ended.');
+                };
+            }
+
+            recognition.start();
+        }
+
+        // Text-to-Speech Function
+        function speakText(text) {
+            if (synth.speaking) {
+                console.log('Speech synthesis in progress, queuing...');
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 1; // Adjust rate for clarity
+            utterance.onend = () => {
+                console.log('Speech synthesis completed.');
+            };
+            utterance.onerror = (err) => {
+                console.error('Speech synthesis error:', err);
+            };
+
+            synth.speak(utterance);
+        }
+
+        // Send Message to Flask Backend
+        async function sendMessageToBackend(message) {
+            displayMessage("...", 'bot'); // Show typing effect
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question: message })
+                });
+
+                const data = await response.json();
+                const botResponse = data.answer || "Sorry, I couldn't fetch a response.";
+                displayTypingEffect(botResponse, 'bot');
+                speakText(botResponse); // Speak the response
+            } catch (error) {
+                console.error('Error fetching response:', error);
+                displayMessage("Error getting response from server.", 'bot');
+            }
+        }
+
+        // Display User or Bot Message
+        function displayMessage(message, sender, status = '') {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            messageElement.innerHTML = `${message}${status ? ` <span class="status">${status}</span>` : ''}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Display Typing Effect
+        function displayTypingEffect(message, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            chatBox.appendChild(messageElement);
+
+            let index = 0;
+            const typingInterval = setInterval(() => {
+                if (index < message.length) {
+                    messageElement.textContent += message[index];
+                    index++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                }
+            }, 50);
+        }
+
+        // Handle User Input
+        function sendMessage() {
+            const inputField = document.getElementById('message');
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            displayMessage(text, 'user', 'Sent');
+            sendMessageToBackend(text);
+
+            inputField.value = '';
+        }
+
+        // Add Event Listener for Enter Key
+        document.getElementById('message').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Chat with Khagendra's Clone</h1>
+        <div id="chat-box" class="chat-box"></div>
+        <div class="input-box">
+            <input type="text" id="message" placeholder="Write your message...">
+            <button onclick="sendMessage()">Send</button>
+            <button class="mic-button" onclick="startSpeechRecognition()">
+                <i class="fa fa-microphone"></i>
+            </button>
+        </div>
+    </div>
+</body>
+</html>
