@@ -5,24 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="shortcut icon" type="web-icon" href="assets/img/logo.png">
-    <title>Chat with Clone</title>
+    <title>Khagendra's clone</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
         body {
             font-family: 'Poppins', sans-serif;
-            height: 100vh;
-            margin: 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
-            text-align: center;
-
-            /* Background Gradient: Night Sky to Desert */
-            background: linear-gradient(to bottom, #0b1a2b 20%, #d2a679 60%, #e0b07b 100%);
-            color: #ffffff;
-            position: relative;
-            overflow: hidden;
+            height: 100vh;
+            margin: 0;
         }
 
         .chat-container {
@@ -33,7 +28,7 @@
             backdrop-filter: blur(10px);
             border-radius: 15px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 20px rgba(255, 215, 160, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2);
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -41,7 +36,7 @@
 
         h1 {
             text-align: center;
-            color: #ffcc99;
+            color: #00d4ff;
         }
 
         .chat-box {
@@ -63,17 +58,17 @@
         }
 
         .message.user {
-            background: #d2a679;
-            color: #2b1d0e;
+            background: #001f3f;
+            color: #00d4ff;
             align-self: flex-end;
-            border-left: 3px solid #a87c4f;
+            border-left: 3px solid #00d4ff;
         }
 
         .message.bot {
-            background: #e0b07b;
-            color: #4a2c1a;
+            background: #003f1f;
+            color: #00ff99;
             align-self: flex-start;
-            border-left: 3px solid #a87c4f;
+            border-left: 3px solid #00ff99;
         }
 
         .input-box {
@@ -86,41 +81,41 @@
             width: 75%;
             padding: 10px;
             border-radius: 10px;
-            border: 1px solid #ffcc99;
+            border: 1px solid #00d4ff;
             background: rgba(255, 255, 255, 0.1);
-            color: #ffcc99;
+            color: #00d4ff;
             outline: none;
         }
 
         button {
-            background: #ffcc99;
+            background: #00d4ff;
             color: black;
             border: none;
             padding: 10px 15px;
             border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 0 10px #ffcc99;
+            box-shadow: 0 0 10px #00d4ff;
             transition: 0.3s;
         }
 
         button:hover {
-            background: #d89c6a;
-            box-shadow: 0 0 15px #ffcc99;
+            background: #0099cc;
+            box-shadow: 0 0 15px #00d4ff;
         }
 
         .mic-button {
             background: transparent;
             border: none;
             font-size: 24px;
-            color: #ffcc99;
+            color: #00d4ff;
             cursor: pointer;
-            text-shadow: 0 0 10px #ffcc99;
+            text-shadow: 0 0 10px #00d4ff;
         }
 
         .mic-button:hover {
-            color: #d89c6a;
-            text-shadow: 0 0 15px #ffcc99;
+            color: #0099cc;
+            text-shadow: 0 0 15px #00d4ff;
         }
 
         @media (max-width: 600px) {
@@ -219,6 +214,24 @@
             messageElement.innerHTML = `${message}${status ? ` <span class="status">${status}</span>` : ''}`;
             chatBox.appendChild(messageElement);
             chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function displayTypingEffect(message, sender) {
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', sender);
+            chatBox.appendChild(messageElement);
+
+            let index = 0;
+            const typingInterval = setInterval(() => {
+                if (index < message.length) {
+                    messageElement.textContent += message[index];
+                    index++;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else {
+                    clearInterval(typingInterval);
+                }
+            }, 50);
         }
 
         function sendMessage() {
